@@ -748,6 +748,7 @@ function get_User(queryObjects) {
 // Удаление заместителя в компетенциях
 function get_RemoveDeputy(queryObjects) { 
     var user_id = queryObjects.HasProperty("person_id") ? OptInt(queryObjects.person_id, null) : null;
+    var type = queryObjects.HasProperty("type") ? Trim(queryObjects.type) : null;
     var findDeputy = ArrayOptFirstElem(XQuery("for $elem in cc_deputy_heads \n\
         where $elem/person_id = " + user_id + " \n\
     return $elem"));
@@ -763,7 +764,31 @@ function get_RemoveDeputy(queryObjects) {
             tools.create_notification('HC2_deputy_coll_cancel', user_id, bossFullname, deputy_id );
         }
     }
-    return get_User({user_id: user_id})
+    if (type != null) {
+        return get_Team({});
+    }
+    return get_User({user_id: user_id});
+}
+
+// Удаление заместителя в компетенциях (Команда)
+function get_RemoveDeputyCompetence(queryObjects) { 
+    var user_id = queryObjects.HasProperty("person_id") ? OptInt(queryObjects.person_id, null) : null;
+    var findDeputy = ArrayOptFirstElem(XQuery("for $elem in cc_deputy_heads \n\
+        where $elem/person_id = " + user_id + " \n\
+    return $elem"));
+    
+    if (findDeputy != undefined) {
+        var bossFullname = tools.open_doc(findDeputy.boss_id).TopElem.fullname;
+        var deputy_id = OptInt(findDeputy.deputy_id, null);
+        DeleteDoc(UrlFromDocID(findDeputy.id));
+        if (ACTIVATE_NOTIFICATION) {
+            // Отмена заместителя (отправка уведомления заместителю)
+            tools.create_notification('HC2_deputy_dep_cancel', deputy_id, bossFullname, user_id );
+            // Отмена заместителя (отправка уведомления сотруднику)
+            tools.create_notification('HC2_deputy_coll_cancel', user_id, bossFullname, deputy_id );
+        }
+    }
+    return get_Team({});
 }
 
 // Установка заместителя в компетенциях
@@ -816,6 +841,7 @@ function post_SaveCompetenceDeputy(queryObjects) {
     }, "json");
 }
 
+// Установка заместителя в компетенциях - Команда
 function post_SaveDeputys() {
     var data = tools.read_object(queryObjects.Body);
     var deputy_id = data.HasProperty('deputy_id') ? OptInt(data.deputy_id, null) : null;
@@ -860,11 +886,7 @@ function post_SaveDeputys() {
         }
     }
 
-    return tools.object_to_text({
-        type: "success",
-        message: "",
-        data: null
-    }, "json");
+    return get_Team({});
 }
 
 function post_SaveGoal(queryObjects) {
@@ -964,6 +986,7 @@ function get_Team(queryObjects) {
                 cmp.value('middlename[1]', 'varchar(max)') as middlename, \n\
                 cmp.value('position_name[1]', 'varchar(max)') as position_name, \n\
                 isNULL(cmp.value('pict_url[1]', 'varchar(max)'), @no_avatar) as avatar, \n\
+                (SELECT cct.deputy_id FROM cc_deputy_heads as cct where cct.person_id = col_xml.id and cct.boss_id = @boss_id) as deputy_id, \n\
                 (SELECT COUNT(*) from cc_hc_totals as cc where cc.person_id = col_xml.id and cc.status <> 'Черновик' and cc.is_close <> 1 and cc.global_locked <> 1 ) as goals_count, \n\
                 ( \n\
                     SELECT \n\
@@ -1100,6 +1123,8 @@ function get_Team(queryObjects) {
             firstname: Trim(el.firstname),
             middlename: Trim(el.middlename),
             position_name: Trim(el.position_name),
+            deputy_id: getDeputy(el.deputy_id).id,
+            deputy_fullname: getDeputy(el.deputy_id).fullname,
             avatar: Trim(el.avatar),
             goals_count: Trim(el.goals_count),
             showTotal: tools_web.is_true(el.show_total),
@@ -1119,6 +1144,8 @@ function get_Team(queryObjects) {
             firstname: Trim(el.firstname),
             middlename: Trim(el.middlename),
             position_name: Trim(el.position_name),
+            deputy_id: null,
+            deputy_fullname: "",
             avatar: Trim(el.avatar),
             goals_count: Trim(el.goals_count),
             showTotal: tools_web.is_true(el.show_total),
