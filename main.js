@@ -125,7 +125,7 @@ function isCurUserBoss() {
     ")) == undefined ? false : true;
 
     var isCompetenceDeputy = ArrayOptFirstElem(XQuery("for $elem in cc_deputy_heads where \n\
-        $elem/boss_id = "+curUserID+" return $elem \n\
+        $elem/deputy_id = "+curUserID+" return $elem \n\
     ")) == undefined ? false : true;
 
     if ( findCompetenceUsers || findGoalsUsers || isGoalsDeputy || isCompetenceDeputy) {
@@ -613,7 +613,7 @@ function get_Competence(queryObjects) {
 }
 
 function get_BaseData() {
-    var category = curUser.custom_elems.ObtainChildByKey('f_ng1k').value;
+    var category = tools.open_doc(curUserID).TopElem.custom_elems.ObtainChildByKey('f_ng1k').value;
     var result = {
         curUser: {
             id: Trim(curUser.id),
