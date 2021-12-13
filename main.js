@@ -21,9 +21,9 @@ try {
 } catch (e) {
     IMG_BASE_URL = "https://agent-learn.vsk.ru";
     //var curUserID =  6992666342957267997 // Оля
-    var curUserID = 6992666023990938310; // Я
+    //var curUserID = 6992666023990938310; // Я
     //var curUserID = 6992666656314124604; // Лариса
-    //var curUserID = 6992659464736094202; // Титлинова
+    var curUserID = 6992659464736094202; // Титлинова
     var curUser = tools.open_doc(curUserID).TopElem;
 }
 
@@ -754,7 +754,7 @@ function get_RemoveDeputy(queryObjects) {
     
     if (findDeputy != undefined) {
         var bossFullname = tools.open_doc(findDeputy.boss_id).TopElem.fullname;
-        var deputy_id = findDeputy.deputy_id;
+        var deputy_id = OptInt(findDeputy.deputy_id, null);
         DeleteDoc(UrlFromDocID(findDeputy.id));
         if (ACTIVATE_NOTIFICATION) {
             // Отмена заместителя (отправка уведомления заместителю)
